@@ -4,59 +4,175 @@
   <meta charset="UTF-8">
   <title>Холст Крокодила</title>
   <style>
-    body { margin: 0; overflow: hidden; }
-    canvas { touch-action: none; background: white; display: block; }
-    #btn {
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #1e1e1e;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      background: white;
+      touch-action: none;
+    }
+    #controls {
       position: fixed;
-      bottom: 10px;
+      bottom: 70px;
       left: 50%;
       transform: translateX(-50%);
-      padding: 10px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      z-index: 10;
+    }
+    .btn {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .color-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid white;
+    }
+    #sendBtn {
+      position: fixed;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 24px;
       background: black;
       color: white;
       font-size: 18px;
       border: none;
       border-radius: 8px;
+      z-index: 10;
     }
   </style>
 </head>
 <body>
+
 <canvas id="canvas" width="512" height="512"></canvas>
-<button id="btn">Отправить рисунок</button>
+
+<div id="controls">
+  <button class="color-btn" style="background:black" onclick="setColor('black')"></button>
+  <button class="color-btn" style="background:red" onclick="setColor('red')"></button>
+  <button class="color-btn" style="background:blue" onclick="setColor('blue')"></button>
+  <button class="color-btn" style="background:green" onclick="setColor('green')"></button>
+  <button class="btn" onclick="toggleSize()">🖌️ Толщина</button>
+  <button class="btn" onclick="setEraser()">✏️ Ластик</button>
+  <button class="btn" onclick="undo()">↩️ Назад</button>
+  <button class="btn" onclick="redo()">↪️ Вперёд</button>
+  <button class="btn" onclick="clearCanvas()">🧼 Очистить</button>
+</div>
+
+<button id="sendBtn">Отправить рисунок</button>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
   const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
-  let drawing = false;
+  const sendBtn = document.getElementById("sendBtn");
 
-  canvas.addEventListener("touchstart", e => {
-    drawing = true;
-    const touch = e.touches[0];
+  let drawing = false;
+  let color = "black";
+  let lineWidth = 4;
+  let history = [];
+  let historyStep = -1;
+
+  Telegram.WebApp.expand();
+  Telegram.WebApp.ready();
+
+  canvas.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    saveHistory();
+    const pos = getTouchPos(e);
     ctx.beginPath();
-    ctx.moveTo(touch.clientX, touch.clientY - 40);
+    ctx.moveTo(pos.x, pos.y);
+    drawing = true;
   });
 
-  canvas.addEventListener("touchmove", e => {
+  canvas.addEventListener("touchmove", (e) => {
     if (!drawing) return;
-    const touch = e.touches[0];
-    ctx.lineTo(touch.clientX, touch.clientY - 40);
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 3;
+    e.preventDefault();
+    const pos = getTouchPos(e);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth;
+    ctx.lineCap = "round";
     ctx.stroke();
   });
 
   canvas.addEventListener("touchend", () => {
     drawing = false;
+    ctx.closePath();
   });
 
-  document.getElementById("btn").addEventListener("click", () => {
-    const imageData = canvas.toDataURL("image/png");
-    Telegram.WebApp.sendData(imageData); // отправка данных боту
+  function getTouchPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    return {
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top
+    };
+  }
+
+  function setColor(newColor) {
+    color = newColor;
+  }
+
+  function toggleSize() {
+    lineWidth = lineWidth === 4 ? 8 : 4;
+  }
+
+  function setEraser() {
+    color = "white";
+  }
+
+  function clearCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    saveHistory();
+  }
+
+  function saveHistory() {
+    if (historyStep < history.length - 1) {
+      history = history.slice(0, historyStep + 1);
+    }
+    history.push(canvas.toDataURL());
+    historyStep++;
+  }
+
+  function undo() {
+    if (historyStep > 0) {
+      historyStep--;
+      restoreHistory();
+    }
+  }
+
+  function redo() {
+    if (historyStep < history.length - 1) {
+      historyStep++;
+      restoreHistory();
+    }
+  }
+
+  function restoreHistory() {
+    const img = new Image();
+    img.src = history[historyStep];
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+    };
+  }
+
+  sendBtn.addEventListener("click", () => {
+    const image = canvas.toDataURL("image/png");
+    Telegram.WebApp.sendData(image);
     Telegram.WebApp.close();
   });
-
-  Telegram.WebApp.ready();
 </script>
 </body>
 </html>
