@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Холст Крокодила</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { touch-action: none; background: white; display: block; }
+    #btn {
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      background: black;
+      color: white;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+<canvas id="canvas" width="512" height="512"></canvas>
+<button id="btn">Отправить рисунок</button>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+  let drawing = false;
+
+  canvas.addEventListener("touchstart", e => {
+    drawing = true;
+    const touch = e.touches[0];
+    ctx.beginPath();
+    ctx.moveTo(touch.clientX, touch.clientY - 40);
+  });
+
+  canvas.addEventListener("touchmove", e => {
+    if (!drawing) return;
+    const touch = e.touches[0];
+    ctx.lineTo(touch.clientX, touch.clientY - 40);
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  });
+
+  canvas.addEventListener("touchend", () => {
+    drawing = false;
+  });
+
+  document.getElementById("btn").addEventListener("click", () => {
+    const imageData = canvas.toDataURL("image/png");
+    Telegram.WebApp.sendData(imageData); // отправка данных боту
+    Telegram.WebApp.close();
+  });
+
+  Telegram.WebApp.ready();
+</script>
+</body>
+</html>
