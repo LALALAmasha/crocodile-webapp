@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -72,10 +73,8 @@
 
 <div id="controls">
   <button id="colorBtn" class="btn">🎨 Цвет</button>
-  
   <label for="sizeRange">🖌 Толщина</label>
   <input type="range" id="sizeRange" min="1" max="20" value="4">
-
   <button class="btn" onclick="setEraser()">✏ Ластик</button>
   <button class="btn" onclick="undo()">↩ Назад</button>
   <button class="btn" onclick="redo()">↪ Вперёд</button>
@@ -83,23 +82,13 @@
 </div>
 
 <button id="sendBtn">📤 Отправить рисунок</button>
-
-<!-- скрытый input для Coloris -->
 <input type="text" id="colorPicker" value="#000000" style="display:none">
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/mdbassit/Coloris@latest/dist/coloris.min.js"></script>
 <script>
-  // инициализация Coloris
-  Coloris({
-    el: '#colorPicker',
-    theme: 'large',
-    themeMode: 'dark',
-    alpha: false,
-    format: 'hex'
-  });
+  Coloris({ el: '#colorPicker', theme: 'large', themeMode: 'dark', alpha: false, format: 'hex' });
 
-  // при клике на кнопку — открываем колесо
   document.getElementById('colorBtn').addEventListener('click', () => {
     document.getElementById('colorPicker').click();
   });
@@ -118,22 +107,19 @@
   Telegram.WebApp.expand();
   Telegram.WebApp.ready();
 
-  // обновление цвета
   document.getElementById('colorPicker').addEventListener('input', e => {
     color = e.target.value;
   });
-  // обновление размера
+
   sizeRange.addEventListener('input', e => {
     lineWidth = parseInt(e.target.value);
   });
 
-  // Мышь
   canvas.addEventListener("mousedown", e => { saveHistory(); ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); drawing = true; });
   canvas.addEventListener("mousemove", e => { if (drawing) drawLine(e.offsetX, e.offsetY); });
   canvas.addEventListener("mouseup", () => drawing = false);
   canvas.addEventListener("mouseout", () => drawing = false);
 
-  // Сенсор
   canvas.addEventListener("touchstart", e => { e.preventDefault(); saveHistory(); const p = getTouchPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); drawing = true; });
   canvas.addEventListener("touchmove", e => { if (drawing) { e.preventDefault(); const p = getTouchPos(e); drawLine(p.x, p.y); } });
   canvas.addEventListener("touchend", () => drawing = false);
@@ -148,18 +134,23 @@
     ctx.shadowBlur = 1.5;
     ctx.stroke();
   }
+
   function getTouchPos(e) {
     const r = canvas.getBoundingClientRect(), t = e.touches[0];
     return { x: t.clientX - r.left, y: t.clientY - r.top };
   }
+
   function setEraser() { color = "white"; }
   function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); saveHistory(); }
+
   function saveHistory() {
     if (historyStep < history.length - 1) history = history.slice(0, historyStep + 1);
     history.push(canvas.toDataURL()); historyStep++;
   }
+
   function undo() { if (historyStep > 0) { historyStep--; restoreHistory(); } }
   function redo() { if (historyStep < history.length - 1) { historyStep++; restoreHistory(); } }
+
   function restoreHistory() {
     const img = new Image(); img.src = history[historyStep];
     img.onload = () => { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.drawImage(img, 0, 0); };
