@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Холст Крокодила</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/mdbassit/Coloris@latest/dist/coloris.min.css"/>
   <style>
     html, body {
       margin: 0;
@@ -44,11 +45,12 @@
     .btn:hover {
       background: #444;
     }
-    input[type="color"], input[type="range"] {
+    input[type="text"], input[type="range"] {
       background: transparent;
       border: none;
       cursor: pointer;
       height: 32px;
+      color: white;
     }
     #sendBtn {
       position: fixed;
@@ -75,11 +77,11 @@
 
 <div id="controls">
   <label for="colorPicker">🎨</label>
-  <input type="color" id="colorPicker" value="#000000" onchange="setColor(this.value)">
-  
+  <input type="text" id="colorPicker" value="#000000">
+
   <label for="sizeRange">🖌</label>
-  <input type="range" id="sizeRange" min="1" max="20" value="4" onchange="setSize(this.value)">
-  
+  <input type="range" id="sizeRange" min="1" max="20" value="4">
+
   <button class="btn" onclick="setEraser()">✏ Ластик</button>
   <button class="btn" onclick="undo()">↩ Назад</button>
   <button class="btn" onclick="redo()">↪ Вперёд</button>
@@ -89,7 +91,17 @@
 <button id="sendBtn">📤 Отправить рисунок</button>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/mdbassit/Coloris@latest/dist/coloris.min.js"></script>
 <script>
+  // Настройка Coloris (цветовое колесо)
+  Coloris({
+    el: '#colorPicker',
+    theme: 'large',
+    themeMode: 'dark',
+    alpha: false,
+    format: 'hex'
+  });
+
   const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
   const sendBtn = document.getElementById("sendBtn");
@@ -103,23 +115,29 @@
   Telegram.WebApp.expand();
   Telegram.WebApp.ready();
 
-  // Мышь
+  // Обновление цвета и размера кисти
+  document.getElementById('colorPicker').addEventListener('input', e => {
+    color = e.target.value;
+  });
+  document.getElementById('sizeRange').addEventListener('input', e => {
+    lineWidth = parseInt(e.target.value);
+  });
+
+  // === Мышь ===
   canvas.addEventListener("mousedown", (e) => {
     saveHistory();
     ctx.beginPath();
     ctx.moveTo(e.offsetX, e.offsetY);
     drawing = true;
   });
-
   canvas.addEventListener("mousemove", (e) => {
     if (!drawing) return;
     drawLine(e.offsetX, e.offsetY);
   });
-
   canvas.addEventListener("mouseup", () => drawing = false);
   canvas.addEventListener("mouseout", () => drawing = false);
 
-  // Сенсор
+  // === Сенсор ===
   canvas.addEventListener("touchstart", (e) => {
     e.preventDefault();
     saveHistory();
@@ -128,14 +146,12 @@
     ctx.moveTo(pos.x, pos.y);
     drawing = true;
   });
-
   canvas.addEventListener("touchmove", (e) => {
     if (!drawing) return;
     e.preventDefault();
     const pos = getTouchPos(e);
     drawLine(pos.x, pos.y);
   });
-
   canvas.addEventListener("touchend", () => drawing = false);
 
   function drawLine(x, y) {
@@ -152,15 +168,10 @@
   function getTouchPos(e) {
     const rect = canvas.getBoundingClientRect();
     const touch = e.touches[0];
-    return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
-  }
-
-  function setColor(newColor) {
-    color = newColor;
-  }
-
-  function setSize(newSize) {
-    lineWidth = parseInt(newSize);
+    return {
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top
+    };
   }
 
   function setEraser() {
