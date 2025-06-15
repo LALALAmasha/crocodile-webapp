@@ -103,25 +103,23 @@
   Telegram.WebApp.expand();
   Telegram.WebApp.ready();
 
-  // === Мышь ===
+  // Мышь
   canvas.addEventListener("mousedown", (e) => {
     saveHistory();
     ctx.beginPath();
     ctx.moveTo(e.offsetX, e.offsetY);
     drawing = true;
   });
+
   canvas.addEventListener("mousemove", (e) => {
     if (!drawing) return;
-    ctx.lineTo(e.offsetX, e.offsetY);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = lineWidth;
-    ctx.lineCap = "round";
-    ctx.stroke();
+    drawLine(e.offsetX, e.offsetY);
   });
+
   canvas.addEventListener("mouseup", () => drawing = false);
   canvas.addEventListener("mouseout", () => drawing = false);
 
-  // === Сенсор ===
+  // Сенсор
   canvas.addEventListener("touchstart", (e) => {
     e.preventDefault();
     saveHistory();
@@ -130,17 +128,26 @@
     ctx.moveTo(pos.x, pos.y);
     drawing = true;
   });
+
   canvas.addEventListener("touchmove", (e) => {
     if (!drawing) return;
     e.preventDefault();
     const pos = getTouchPos(e);
-    ctx.lineTo(pos.x, pos.y);
+    drawLine(pos.x, pos.y);
+  });
+
+  canvas.addEventListener("touchend", () => drawing = false);
+
+  function drawLine(x, y) {
+    ctx.lineTo(x, y);
     ctx.strokeStyle = color;
     ctx.lineWidth = lineWidth;
     ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 1.5;
     ctx.stroke();
-  });
-  canvas.addEventListener("touchend", () => drawing = false);
+  }
 
   function getTouchPos(e) {
     const rect = canvas.getBoundingClientRect();
