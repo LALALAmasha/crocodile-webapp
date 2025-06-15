@@ -18,15 +18,17 @@
     }
     #controls {
       position: fixed;
-      bottom: 70px;
+      bottom: 85px;
       left: 50%;
       transform: translateX(-50%);
-      display: grid;
-      grid-template-columns: repeat(4, auto);
+      display: flex;
+      flex-wrap: wrap;
       gap: 10px;
+      align-items: center;
+      justify-content: center;
       z-index: 10;
-      background: rgba(30, 30, 30, 0.9);
-      padding: 10px;
+      background: rgba(30, 30, 30, 0.95);
+      padding: 12px;
       border-radius: 12px;
     }
     .btn {
@@ -42,25 +44,28 @@
     .btn:hover {
       background: #444;
     }
-    .color-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: 2px solid white;
+    input[type="color"], input[type="range"] {
+      background: transparent;
+      border: none;
       cursor: pointer;
+      height: 32px;
     }
     #sendBtn {
       position: fixed;
-      bottom: 15px;
+      bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
       padding: 12px 24px;
-      background: #000;
+      background: black;
       color: white;
       font-size: 16px;
       border: none;
       border-radius: 8px;
       z-index: 10;
+    }
+    label {
+      color: white;
+      font-size: 13px;
     }
   </style>
 </head>
@@ -69,16 +74,15 @@
 <canvas id="canvas" width="512" height="512"></canvas>
 
 <div id="controls">
-  <button class="color-btn" style="background:black" onclick="setColor('black')"></button>
-  <button class="color-btn" style="background:red" onclick="setColor('red')"></button>
-  <button class="color-btn" style="background:blue" onclick="setColor('blue')"></button>
-  <button class="color-btn" style="background:green" onclick="setColor('green')"></button>
-
-  <button class="btn" onclick="toggleSize()">🖌 Толщина</button>
+  <label for="colorPicker">🎨</label>
+  <input type="color" id="colorPicker" value="#000000" onchange="setColor(this.value)">
+  
+  <label for="sizeRange">🖌</label>
+  <input type="range" id="sizeRange" min="1" max="20" value="4" onchange="setSize(this.value)">
+  
   <button class="btn" onclick="setEraser()">✏ Ластик</button>
   <button class="btn" onclick="undo()">↩ Назад</button>
   <button class="btn" onclick="redo()">↪ Вперёд</button>
-
   <button class="btn" onclick="clearCanvas()">🧼 Очистить</button>
 </div>
 
@@ -91,7 +95,7 @@
   const sendBtn = document.getElementById("sendBtn");
 
   let drawing = false;
-  let color = "black";
+  let color = "#000000";
   let lineWidth = 4;
   let history = [];
   let historyStep = -1;
@@ -148,8 +152,8 @@
     color = newColor;
   }
 
-  function toggleSize() {
-    lineWidth = lineWidth === 4 ? 8 : 4;
+  function setSize(newSize) {
+    lineWidth = parseInt(newSize);
   }
 
   function setEraser() {
